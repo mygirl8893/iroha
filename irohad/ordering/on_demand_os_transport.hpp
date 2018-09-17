@@ -6,14 +6,13 @@
 #ifndef IROHA_ON_DEMAND_OS_TRANSPORT_HPP
 #define IROHA_ON_DEMAND_OS_TRANSPORT_HPP
 
-#include <cstdint>
 #include <memory>
 #include <tuple>
-#include <utility>
 #include <vector>
 
-#include <boost/functional/hash.hpp>
 #include <boost/optional.hpp>
+
+#include "consensus/round.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -26,47 +25,6 @@ namespace shared_model {
 namespace iroha {
   namespace ordering {
     namespace transport {
-
-      /**
-       * Type of round indexing by blocks
-       */
-      using BlockRoundType = uint64_t;
-
-      /**
-       * Type of round indexing by reject before new block commit
-       */
-      using RejectRoundType = uint32_t;
-
-      /**
-       * Type of proposal round
-       */
-      struct Round {
-        BlockRoundType block_round;
-        RejectRoundType reject_round;
-
-        bool operator<(const Round &rhs) const {
-          return std::tie(block_round, reject_round)
-              < std::tie(rhs.block_round, rhs.reject_round);
-        }
-
-        bool operator==(const Round &rhs) const {
-          return std::tie(block_round, reject_round)
-              == std::tie(rhs.block_round, rhs.reject_round);
-        }
-      };
-
-      /**
-       * Class provides hash function for Round
-       */
-      class RoundTypeHasher {
-       public:
-        std::size_t operator()(const Round &val) const {
-          size_t seed = 0;
-          boost::hash_combine(seed, val.block_round);
-          boost::hash_combine(seed, val.reject_round);
-          return seed;
-        }
-      };
 
       /**
        * Notification interface of on demand ordering service.
@@ -94,7 +52,7 @@ namespace iroha {
          * @param round - expected proposal round
          * @param transactions - vector of passed transactions
          */
-        virtual void onTransactions(Round round,
+        virtual void onTransactions(consensus::Round round,
                                     CollectionType transactions) = 0;
 
         /**
@@ -104,7 +62,7 @@ namespace iroha {
          * @return proposal for requested round
          */
         virtual boost::optional<ProposalType> onRequestProposal(
-            Round round) = 0;
+            consensus::Round round) = 0;
 
         virtual ~OdOsNotification() = default;
       };

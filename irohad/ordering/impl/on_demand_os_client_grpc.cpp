@@ -22,7 +22,7 @@ OnDemandOsClientGrpc::OnDemandOsClientGrpc(
       time_provider_(std::move(time_provider)),
       proposal_request_timeout_(proposal_request_timeout) {}
 
-void OnDemandOsClientGrpc::onTransactions(transport::Round round,
+void OnDemandOsClientGrpc::onTransactions(consensus::Round round,
                                           CollectionType transactions) {
   proto::TransactionsRequest request;
   request.mutable_round()->set_block_round(round.block_round);
@@ -41,7 +41,7 @@ void OnDemandOsClientGrpc::onTransactions(transport::Round round,
 }
 
 boost::optional<OdOsNotification::ProposalType>
-OnDemandOsClientGrpc::onRequestProposal(transport::Round round) {
+OnDemandOsClientGrpc::onRequestProposal(consensus::Round round) {
   grpc::ClientContext context;
   context.set_deadline(time_provider_() + proposal_request_timeout_);
   proto::ProposalRequest request;

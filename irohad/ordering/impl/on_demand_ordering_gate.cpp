@@ -17,7 +17,7 @@ OnDemandOrderingGate::OnDemandOrderingGate(
     std::shared_ptr<transport::OdOsNotification> network_client,
     rxcpp::observable<BlockRoundEventType> events,
     std::unique_ptr<shared_model::interface::UnsafeProposalFactory> factory,
-    transport::Round initial_round)
+    consensus::Round initial_round)
     : ordering_service_(std::move(ordering_service)),
       network_client_(std::move(network_client)),
       events_subscription_(events.subscribe([this](auto event) {

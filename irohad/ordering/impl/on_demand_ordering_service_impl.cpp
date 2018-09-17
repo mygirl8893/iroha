@@ -20,12 +20,12 @@ using namespace iroha::ordering;
 /**
  * First round after successful committing block
  */
-const iroha::ordering::transport::RejectRoundType kFirstRound = 1;
+const iroha::consensus::RejectRoundType kFirstRound = 1;
 
 OnDemandOrderingServiceImpl::OnDemandOrderingServiceImpl(
     size_t transaction_limit,
     size_t number_of_proposals,
-    const transport::Round &initial_round)
+    const consensus::Round &initial_round)
     : transaction_limit_(transaction_limit),
       number_of_proposals_(number_of_proposals),
       log_(logger::log("OnDemandOrderingServiceImpl")) {
@@ -35,7 +35,7 @@ OnDemandOrderingServiceImpl::OnDemandOrderingServiceImpl(
 // -------------------------| OnDemandOrderingService |-------------------------
 
 void OnDemandOrderingServiceImpl::onCollaborationOutcome(
-    transport::Round round) {
+    consensus::Round round) {
   log_->info("onCollaborationOutcome => round[{}, {}]",
              round.block_round,
              round.reject_round);
@@ -49,7 +49,7 @@ void OnDemandOrderingServiceImpl::onCollaborationOutcome(
 
 // ----------------------------| OdOsNotification |-----------------------------
 
-void OnDemandOrderingServiceImpl::onTransactions(transport::Round round,
+void OnDemandOrderingServiceImpl::onTransactions(consensus::Round round,
                                                  CollectionType transactions) {
   // read lock
   std::shared_lock<std::shared_timed_mutex> guard(lock_);
@@ -68,7 +68,7 @@ void OnDemandOrderingServiceImpl::onTransactions(transport::Round round,
 }
 
 boost::optional<OnDemandOrderingServiceImpl::ProposalType>
-OnDemandOrderingServiceImpl::onRequestProposal(transport::Round round) {
+OnDemandOrderingServiceImpl::onRequestProposal(consensus::Round round) {
   // read lock
   std::shared_lock<std::shared_timed_mutex> guard(lock_);
   auto proposal = proposal_map_.find(round);
@@ -82,8 +82,8 @@ OnDemandOrderingServiceImpl::onRequestProposal(transport::Round round) {
 // ---------------------------------| Private |---------------------------------
 
 void OnDemandOrderingServiceImpl::packNextProposals(
-    const transport::Round &round) {
-  auto close_round = [this](transport::Round round) {
+    const consensus::Round &round) {
+  auto close_round = [this](consensus::Round round) {
     auto it = current_proposals_.find(round);
     if (it != current_proposals_.end()) {
       if (not it->second.empty()) {
@@ -148,7 +148,7 @@ void OnDemandOrderingServiceImpl::packNextProposals(
 }
 
 OnDemandOrderingServiceImpl::ProposalType
-OnDemandOrderingServiceImpl::emitProposal(const transport::Round &round) {
+OnDemandOrderingServiceImpl::emitProposal(const consensus::Round &round) {
   iroha::protocol::Proposal proto_proposal;
   proto_proposal.set_height(round.block_round);
   proto_proposal.set_created_time(iroha::time::now());
