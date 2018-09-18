@@ -101,14 +101,15 @@ namespace iroha {
       // ------|Private interface|------
 
       void Yac::votingStep(VoteMessage vote) {
-        auto committed = vote_storage_.isHashCommitted(vote.hash.proposal_hash);
+        auto committed =
+            vote_storage_.isHashCommitted(vote.hash.vote_hashes_.proposal_hash);
         if (committed) {
           return;
         }
 
         log_->info("Vote for hash ({}, {})",
-                   vote.hash.proposal_hash,
-                   vote.hash.block_hash);
+                   vote.hash.vote_hashes_.proposal_hash,
+                   vote.hash.vote_hashes_.block_hash);
 
         network_->sendState(cluster_order_.currentLeader(), {vote});
         cluster_order_.switchToNext();
@@ -142,7 +143,7 @@ namespace iroha {
         // separate entity
 
         answer | [&](const auto &answer) {
-          auto &proposal_hash = state.at(0).hash.proposal_hash;
+          auto &proposal_hash = state.at(0).hash.vote_hashes_.proposal_hash;
 
           /*
            * It is possible that a new peer with an outdated peers list may

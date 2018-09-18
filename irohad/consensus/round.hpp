@@ -11,6 +11,13 @@
 
 #include <boost/functional/hash.hpp>
 
+namespace shared_model {
+  namespace interface {
+    class Proposal;
+    class Block;
+  }  // namespace interface
+}  // namespace shared_model
+
 namespace iroha {
   namespace consensus {
 
@@ -54,6 +61,20 @@ namespace iroha {
         return seed;
       }
     };
+
+    /**
+     * Type of proposal and round this proposal was voted for in
+     */
+    using ProposalWithRound =
+        std::pair<std::shared_ptr<shared_model::interface::Proposal>,
+                  std::shared_ptr<Round>>;
+
+    /**
+     * Type of block and round this block was voted for in
+     */
+    using BlockWithRound =
+        std::pair<std::shared_ptr<shared_model::interface::Block>,
+                  std::shared_ptr<Round>>;
 
   }  // namespace consensus
 }  // namespace iroha

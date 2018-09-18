@@ -19,6 +19,7 @@
 #define IROHA_CONSENSUS_GATE_HPP
 
 #include <rxcpp/rx.hpp>
+#include "consensus/round.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -35,10 +36,10 @@ namespace iroha {
      public:
       /**
        * Providing data for consensus for voting
-       * @param block is the block for which current node is voting
+       * @param block_with_round is the block for which current node is voting
+       * with its round
        */
-      virtual void vote(
-          std::shared_ptr<shared_model::interface::Block> block) = 0;
+      virtual void vote(const consensus::BlockWithRound &) = 0;
 
       /**
        * Emit committed blocks

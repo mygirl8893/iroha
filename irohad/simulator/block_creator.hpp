@@ -19,6 +19,7 @@
 #define IROHA_BLOCK_CREATOR_HPP
 
 #include <rxcpp/rx-observable.hpp>
+#include "consensus/round.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -37,17 +38,17 @@ namespace iroha {
      public:
       /**
        * Processing proposal for making stateful validation
-       * @param proposal - object for validation
+       * @param proposal_with_round - proposal for validation with its consensus
+       * round
        */
       virtual void process_verified_proposal(
-          const shared_model::interface::Proposal &) = 0;
+          const consensus::ProposalWithRound &) = 0;
 
       /**
        * Emit blocks made from proposals
        * @return
        */
-      virtual rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
-      on_block() = 0;
+      virtual rxcpp::observable<consensus::BlockWithRound> on_block() = 0;
 
       virtual ~BlockCreator() = default;
     };

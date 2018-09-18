@@ -23,11 +23,13 @@ namespace iroha {
     namespace yac {
 
       YacHash YacHashProviderImpl::makeHash(
-          const shared_model::interface::Block &block) const {
+          const shared_model::interface::Block &block,
+          const Round &round) const {
         YacHash result;
         auto hex_hash = block.hash().hex();
-        result.proposal_hash = hex_hash;
-        result.block_hash = hex_hash;
+        result.vote_hashes_.proposal_hash = hex_hash;
+        result.vote_hashes_.block_hash = hex_hash;
+        result.vote_round_ = round;
         result.block_signature = clone(block.signatures().front());
         return result;
       }

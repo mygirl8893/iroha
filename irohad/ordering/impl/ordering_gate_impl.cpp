@@ -54,7 +54,7 @@ namespace iroha {
       transport_->propagateBatch(batch);
     }
 
-    rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
+    rxcpp::observable<consensus::ProposalWithRound>
     OrderingGateImpl::on_proposal() {
       return proposals_.get_observable();
     }
@@ -129,7 +129,9 @@ namespace iroha {
         }
         log_->info("Pass the proposal to pipeline height {}",
                    next_proposal->height());
-        proposals_.get_subscriber().on_next(next_proposal);
+        proposals_.get_subscriber().on_next(consensus::ProposalWithRound{
+            std::move(next_proposal),
+            std::make_shared<consensus::Round>(next_proposal->height(), 0)});
       }
     }
 

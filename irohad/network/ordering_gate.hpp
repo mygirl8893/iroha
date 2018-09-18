@@ -20,6 +20,7 @@
 
 #include <rxcpp/rx-observable.hpp>
 
+#include "consensus/round.hpp"
 #include "network/peer_communication_service.hpp"
 
 namespace shared_model {
@@ -45,12 +46,11 @@ namespace iroha {
           const shared_model::interface::TransactionBatch &batch) const = 0;
 
       /**
-       * Return observable of all proposals in the consensus
-       * @return observable with notifications
+       * Return observable of proposals in the consensus with rounds they
+       * appeared in
+       * @return observable with proposals and rounds
        */
-      virtual rxcpp::observable<
-          std::shared_ptr<shared_model::interface::Proposal>>
-      on_proposal() = 0;
+      virtual rxcpp::observable<consensus::ProposalWithRound> on_proposal() = 0;
 
       /**
        * Set peer communication service for commit notification

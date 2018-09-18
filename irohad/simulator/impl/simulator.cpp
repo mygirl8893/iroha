@@ -30,16 +30,8 @@ namespace iroha {
           log_(logger::log("Simulator")) {
       ordering_gate->on_proposal().subscribe(
           proposal_subscription_,
-          [this](std::shared_ptr<shared_model::interface::Proposal> proposal) {
-            this->process_proposal(*proposal);
-          });
-
-      notifier_.get_observable().subscribe(
-          verified_proposal_subscription_,
-          [this](std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>
-                     verified_proposal_and_errors) {
-            this->process_verified_proposal(
-                *verified_proposal_and_errors->first);
+          [this](const consensus::ProposalWithRound &proposal_with_round) {
+            this->process_proposal(proposal_with_round);
           });
     }
 
@@ -55,7 +47,7 @@ namespace iroha {
     }
 
     void Simulator::process_proposal(
-        const shared_model::interface::Proposal &proposal) {
+        const consensus::ProposalWithRound &proposal_with_round) {
       log_->info("process proposal");
       // Get last block from local ledger
       auto top_block_result = block_query_factory_->createBlockQuery() |
@@ -74,6 +66,7 @@ namespace iroha {
         return;
       }
 
+      const auto &proposal = *proposal_with_round.first;
       if (last_block->height() + 1 != proposal.height()) {
         log_->warn("Last block height: {}, proposal height: {}",
                    last_block->height(),
@@ -87,8 +80,10 @@ namespace iroha {
             auto validated_proposal_and_errors =
                 std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
                     validator_->validate(proposal, *temporaryStorage.value));
-            notifier_.get_subscriber().on_next(
-                std::move(validated_proposal_and_errors));
+            notifier_.get_subscriber().on_next(validated_proposal_and_errors);
+            process_verified_proposal(consensus::ProposalWithRound{
+                validated_proposal_and_errors->first,
+                proposal_with_round.second});
           },
           [&](expected::Error<std::string> &error) {
             log_->error(error.error);
@@ -99,7 +94,7 @@ namespace iroha {
     }
 
     void Simulator::process_verified_proposal(
-        const shared_model::interface::Proposal &proposal) {
+        const consensus::ProposalWithRound &proposal_with_round) {
       log_->info("process verified proposal");
 
       auto height = block_query_factory_->createBlockQuery() |
@@ -110,17 +105,19 @@ namespace iroha {
         log_->error("Unable to query top block height");
         return;
       }
+
+      const auto &proposal = *proposal_with_round.first;
       std::shared_ptr<shared_model::interface::Block> block =
           block_factory_->unsafeCreateBlock(height,
                                             last_block->hash(),
                                             proposal.createdTime(),
                                             proposal.transactions());
       crypto_signer_->sign(*block);
-      block_notifier_.get_subscriber().on_next(block);
+      block_notifier_.get_subscriber().on_next(
+          consensus::BlockWithRound{block, proposal_with_round.second});
     }
 
-    rxcpp::observable<std::shared_ptr<shared_model::interface::Block>>
-    Simulator::on_block() {
+    rxcpp::observable<consensus::BlockWithRound> Simulator::on_block() {
       return block_notifier_.get_observable();
     }
 

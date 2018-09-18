@@ -49,13 +49,17 @@ namespace iroha {
             consensus_result_cache_(std::move(consensus_result_cache)),
             log_(logger::log("YacGate")) {
         block_creator_->on_block().subscribe(
-            [this](auto block) { this->vote(block); });
+            [this](const auto &block_with_round) {
+              this->vote(block_with_round);
+            });
       }
 
-      void YacGateImpl::vote(std::shared_ptr<shared_model::interface::Block> block) {
-        auto hash = hash_provider_->makeHash(*block);
+      void YacGateImpl::vote(
+          const consensus::BlockWithRound &block_with_round) {
+        auto block = block_with_round.first;
+        auto hash = hash_provider_->makeHash(*block, *block_with_round.second);
         log_->info("vote for block ({}, {})",
-                   hash.proposal_hash,
+                   hash.vote_hashes_.proposal_hash,
                    block->hash().toString());
         auto order = orderer_->getOrdering(hash);
         if (not order) {

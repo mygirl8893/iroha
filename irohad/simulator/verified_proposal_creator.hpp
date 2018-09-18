@@ -19,6 +19,7 @@
 #define IROHA_VERIFIED_PROPOSAL_CREATOR_HPP
 
 #include <rxcpp/rx-observable.hpp>
+#include "consensus/round.hpp"
 #include "validation/stateful_validator_common.hpp"
 
 namespace shared_model {
@@ -37,10 +38,11 @@ namespace iroha {
      public:
       /**
        * Processing proposal for making stateful validation
-       * @param proposal - object for validation
+       * @param proposal_with_round - proposal for validation with its consensus
+       * round
        */
       virtual void process_proposal(
-          const shared_model::interface::Proposal &proposal) = 0;
+          const consensus::ProposalWithRound &proposal_with_round) = 0;
 
       /**
        * Emit proposals that was verified by validation
