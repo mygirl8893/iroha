@@ -111,6 +111,20 @@ int main(int argc, char *argv[]) {
     log->error("Failed to load keypair");
     return EXIT_FAILURE;
   }
+  using namespace std::chrono_literals;
+
+  std::cout
+      << config[mbr::BlockStorePath].GetString() << std::endl
+      << config[mbr::PgOpt].GetString() << std::endl
+      << config[mbr::ToriiPort].GetUint() << std::endl
+      << config[mbr::InternalPort].GetUint() << std::endl
+      << config[mbr::MaxProposalSize].GetUint() << std::endl
+      << std::chrono::milliseconds(config[mbr::ProposalDelay].GetUint()).count()
+      << std::endl
+      << std::chrono::milliseconds(config[mbr::VoteDelay].GetUint()).count()
+      << std::endl
+      << FLAGS_keypair_name << std::endl
+      << config[mbr::MstSupport].GetBool();
 
   // Configuring iroha daemon
   Irohad irohad(config[mbr::BlockStorePath].GetString(),

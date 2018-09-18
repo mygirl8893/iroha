@@ -6,6 +6,7 @@
 #ifndef IROHA_PROTO_TRANSACTION_VALIDATOR_HPP
 #define IROHA_PROTO_TRANSACTION_VALIDATOR_HPP
 
+#include "backend/protobuf/util.hpp"
 #include "cryptography/default_hash_provider.hpp"
 #include "transaction.pb.h"
 #include "validators/abstract_validator.hpp"
@@ -19,26 +20,21 @@ namespace shared_model {
       Answer validate(
           const iroha::protocol::Transaction &transaction) const override {
         Answer answer;
-        auto hash = shared_model::crypto::DefaultHashProvider::makeHash(
-            proto::makeBlob(tx.payload()));
-        std::string tx_reason_name = "Transaction " + hash.toString();
+        std::string tx_reason_name = "Transaction ";
         ReasonsGroupType tx_reason(tx_reason_name, GroupedReasons());
 
         for (const auto &command :
              transaction.payload().reduced_payload().commands()) {
-          switch (command.command_case()) {
-            case iroha::protocol::Command::COMMAND_NOT_SET:
-              tx_reason.second.emplace_back("Command is not set");
-              break;
-            default:
-              break;
+          if (command.command_case()
+              == iroha::protocol::Command::COMMAND_NOT_SET) {
+            tx_reason.second.emplace_back("Undefined command is found");
+            answer.addReason(std::move(tx_reason));
+            break;
           }
         }
-
         return answer;
-      }
+      };
     };
-
   }  // namespace validation
 }  // namespace shared_model
 

@@ -13,6 +13,7 @@
 #include "endpoint.grpc.pb.h"
 #include "endpoint.pb.h"
 #include "interfaces/iroha_internal/tx_status_factory.hpp"
+#include "validators/protobuf/proto_transaction_validator.hpp"
 #include "logger/logger.hpp"
 #include "torii/status_bus.hpp"
 
@@ -90,6 +91,7 @@ namespace torii {
     const std::chrono::milliseconds initial_timeout_;
     const std::chrono::milliseconds nonfinal_timeout_;
     std::shared_ptr<shared_model::interface::TxStatusFactory> status_factory_;
+    shared_model::validation::ProtoTransactionValidator proto_tx_validator_;
     logger::Logger log_;
   };
 }  // namespace torii

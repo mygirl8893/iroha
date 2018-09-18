@@ -14,6 +14,7 @@
 #include "common/timeout.hpp"
 #include "cryptography/default_hash_provider.hpp"
 #include "validators/default_validator.hpp"
+#include "validators/protobuf/proto_transaction_validator.hpp"
 
 namespace torii {
 
@@ -79,42 +80,59 @@ namespace torii {
       grpc::ServerContext *context,
       const iroha::protocol::TxList *request,
       google::protobuf::Empty *response) {
+    iroha::protocol::TxList filtered_txs;
+    std::for_each(
+        request->transactions().begin(),
+        request->transactions().end(),
+        [&filtered_txs, this](const auto &tx) {
+          auto answer = proto_tx_validator_.validate(tx);
+          if (not answer.hasErrors()) {
+            filtered_txs.add_transactions()->CopyFrom(tx);
+          } else {
+            auto hash = shared_model::crypto::DefaultHashProvider::makeHash(
+                shared_model::proto::makeBlob(tx.payload()));
+            auto error_msg = formErrorMessage({hash}, answer.reason());
+            status_bus_->publish(
+                status_factory_->makeStatelessFail(hash, error_msg));
+          }
+        });
+
     auto tx_list_builder = shared_model::proto::TransportBuilder<
         shared_model::interface::TransactionSequence,
         shared_model::validation::DefaultUnsignedTransactionsValidator>();
 
-    tx_list_builder.build(*request).match(
-        [this](
-            iroha::expected::Value<shared_model::interface::TransactionSequence>
-                &tx_sequence) {
-          this->command_service_->handleTransactionList(tx_sequence.value);
-        },
-        [this, request](auto &error) {
-          auto &txs = request->transactions();
-          if (txs.empty()) {
-            log_->warn("Received no transactions. Skipping");
-            return;
-          }
-          using HashType = shared_model::crypto::Hash;
+    tx_list_builder.build(filtered_txs)
+        .match(
+            [this](iroha::expected::Value<
+                   shared_model::interface::TransactionSequence> &tx_sequence) {
+              this->command_service_->handleTransactionList(tx_sequence.value);
+            },
+            [this, request](auto &error) {
+              auto &txs = request->transactions();
+              if (txs.empty()) {
+                log_->warn("Received no transactions. Skipping");
+                return;
+              }
+              using HashType = shared_model::crypto::Hash;
 
-          std::vector<HashType> hashes;
-          std::transform(
-              txs.begin(),
-              txs.end(),
-              std::back_inserter(hashes),
-              [](const auto &tx) {
-                return shared_model::crypto::DefaultHashProvider::makeHash(
-                    shared_model::proto::makeBlob(tx.payload()));
-              });
+              std::vector<HashType> hashes;
+              std::transform(
+                  txs.begin(),
+                  txs.end(),
+                  std::back_inserter(hashes),
+                  [](const auto &tx) {
+                    return shared_model::crypto::DefaultHashProvider::makeHash(
+                        shared_model::proto::makeBlob(tx.payload()));
+                  });
 
-          auto error_msg = formErrorMessage(hashes, error.error);
-          // set error response for each transaction in a sequence
-          std::for_each(
-              hashes.begin(), hashes.end(), [this, &error_msg](auto &hash) {
-                status_bus_->publish(
-                    status_factory_->makeStatelessFail(hash, error_msg));
-              });
-        });
+              auto error_msg = formErrorMessage(hashes, error.error);
+              // set error response for each transaction in a sequence
+              std::for_each(
+                  hashes.begin(), hashes.end(), [this, &error_msg](auto &hash) {
+                    status_bus_->publish(
+                        status_factory_->makeStatelessFail(hash, error_msg));
+                  });
+            });
     return grpc::Status::OK;
   }
 
