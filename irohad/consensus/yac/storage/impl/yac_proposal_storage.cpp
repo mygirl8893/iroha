@@ -64,10 +64,11 @@ namespace iroha {
           // insert to block store
 
           log_->info("Vote [{}, {}] looks valid",
-                     msg.hash.proposal_hash,
-                     msg.hash.block_hash);
+                     msg.hash.vote_hashes_.proposal_hash,
+                     msg.hash.vote_hashes_.block_hash);
 
-          auto iter = findStore(msg.hash.proposal_hash, msg.hash.block_hash);
+          auto iter = findStore(msg.hash.vote_hashes_.proposal_hash,
+                                msg.hash.vote_hashes_.block_hash);
           auto block_state = iter->insert(msg);
 
           // Single BlockStorage always returns CommitMessage because it
@@ -105,7 +106,7 @@ namespace iroha {
       // --------| private api |--------
 
       bool YacProposalStorage::shouldInsert(const VoteMessage &msg) {
-        return checkProposalHash(msg.hash.proposal_hash)
+        return checkProposalHash(msg.hash.vote_hashes_.proposal_hash)
             and checkPeerUniqueness(msg);
       }
 

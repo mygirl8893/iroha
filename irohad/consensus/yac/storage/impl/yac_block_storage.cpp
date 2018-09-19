@@ -39,8 +39,8 @@ namespace iroha {
           votes_.push_back(msg);
 
           log_->info("Vote ({}, {}) inserted",
-                     msg.hash.proposal_hash,
-                     msg.hash.block_hash);
+                     msg.hash.vote_hashes_.proposal_hash,
+                     msg.hash.vote_hashes_.block_hash);
           log_->info(
               "Votes in storage [{}/{}]", votes_.size(), peers_in_round_);
         }
