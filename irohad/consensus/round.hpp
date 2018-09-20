@@ -47,6 +47,10 @@ namespace iroha {
         return std::tie(block_round, reject_round)
             == std::tie(rhs.block_round, rhs.reject_round);
       }
+
+      bool operator!=(const Round &rhs) const {
+        return not (*this == rhs);
+      }
     };
 
     /**

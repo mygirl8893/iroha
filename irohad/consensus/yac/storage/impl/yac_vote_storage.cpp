@@ -28,23 +28,23 @@ namespace iroha {
 
       // --------| private api |--------
 
-      auto YacVoteStorage::getProposalStorage(ProposalHash hash) {
+      auto YacVoteStorage::getProposalStorage(Round round) {
         return std::find_if(proposal_storages_.begin(),
                             proposal_storages_.end(),
-                            [&hash](auto storage) {
-                              return storage.getProposalHash() == hash;
+                            [&round](auto storage) {
+                              return storage.getStorageKey() == round;
                             });
       }
 
       auto YacVoteStorage::findProposalStorage(const VoteMessage &msg,
                                                PeersNumberType peers_in_round) {
-        auto val = getProposalStorage(msg.hash.vote_hashes_.proposal_hash);
+        auto val = getProposalStorage(msg.hash.vote_round_);
         if (val != proposal_storages_.end()) {
           return val;
         }
         return proposal_storages_.emplace(
             proposal_storages_.end(),
-            msg.hash.vote_hashes_.proposal_hash,
+            msg.hash.vote_round_,
             peers_in_round,
             std::make_shared<SupermajorityCheckerImpl>());
       }
@@ -57,21 +57,20 @@ namespace iroha {
         return storage->insert(state);
       }
 
-      bool YacVoteStorage::isHashCommitted(ProposalHash hash) {
-        auto iter = getProposalStorage(std::move(hash));
+      bool YacVoteStorage::isCommitted(Round round) {
+        auto iter = getProposalStorage(round);
         if (iter == proposal_storages_.end()) {
           return false;
         }
         return bool(iter->getState());
       }
 
-      ProposalState YacVoteStorage::getProcessingState(
-          const ProposalHash &hash) {
-        return processing_state_[hash];
+      ProposalState YacVoteStorage::getProcessingState(Round round) {
+        return processing_state_[round];
       }
 
-      void YacVoteStorage::nextProcessingState(const ProposalHash &hash) {
-        auto &val = processing_state_[hash];
+      void YacVoteStorage::nextProcessingState(Round round) {
+        auto &val = processing_state_[round];
         switch (val) {
           case ProposalState::kNotSentNotProcessed:
             val = ProposalState::kSentNotProcessed;
