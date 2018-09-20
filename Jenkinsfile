@@ -23,8 +23,8 @@ properties([parameters([
 
 pipeline {
   environment {
-    CCACHE_DIR = '/var/jenkins/.ccache'
-    CCACHE_RELEASE_DIR = '/var/jenkins/.ccache-release'
+    CCACHE_DIR = '/opt/.ccache'
+    CCACHE_RELEASE_DIR = '/opt/.ccache-release'
     SORABOT_TOKEN = credentials('SORABOT_TOKEN')
     SONAR_TOKEN = credentials('SONAR_TOKEN')
     GIT_RAW_BASE_URL = "https://raw.githubusercontent.com/hyperledger/iroha"

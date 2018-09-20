@@ -56,7 +56,6 @@ def doDebugBuild(coverageEnabled=false) {
       + " -e IROHA_POSTGRES_USER=${env.IROHA_POSTGRES_USER}"
       + " -e IROHA_POSTGRES_PASSWORD=${env.IROHA_POSTGRES_PASSWORD}"
       + " --network=${env.IROHA_NETWORK}"
-      + " -v /var/jenkins/ccache:${CCACHE_DIR}"
       + " -v /tmp/${GIT_COMMIT}-${BUILD_NUMBER}:/tmp/${GIT_COMMIT}") {
 
       def scmVars = checkout scm
