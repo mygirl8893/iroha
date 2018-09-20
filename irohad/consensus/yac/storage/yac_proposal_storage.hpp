@@ -46,10 +46,10 @@ namespace iroha {
         /**
          * Find block index with provided parameters,
          * if those store absent - create new
-         * @param store_round - round of block of interest
+         * @param store_hash - hash of store of interest
          * @return iterator to storage
          */
-        auto findStore(Round store_round);
+        auto findStore(YacHash store_hash);
 
        public:
         // --------| public api |--------

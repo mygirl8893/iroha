@@ -25,22 +25,24 @@ namespace iroha {
 
       // --------| private api |--------
 
-      auto YacProposalStorage::findStore(Round store_round) {
+      auto YacProposalStorage::findStore(YacHash store_hash) {
         // find exist
-        auto iter = std::find_if(
-            block_storages_.begin(),
-            block_storages_.end(),
-            [&store_round](auto block_storage) {
-              auto storage_key = block_storage.getStorageKey();
-              return storage_key.block_round == store_round.block_round
-                  and storage_key.reject_round == store_round.reject_round;
-            });
+        auto iter = std::find_if(block_storages_.begin(),
+                                 block_storages_.end(),
+                                 [&store_hash](auto block_storage) {
+                                   auto storage_key =
+                                       block_storage.getStorageKey();
+                                   return storage_key.block_round
+                                       == store_hash.vote_round_.block_round
+                                       and storage_key.reject_round
+                                       == store_hash.vote_round_.reject_round;
+                                 });
         if (iter != block_storages_.end()) {
           return iter;
         }
         // insert and return new
         return block_storages_.emplace(block_storages_.end(),
-                                       store_round,
+                                       std::move(store_hash),
                                        peers_in_round_,
                                        supermajority_checker_);
       }
@@ -68,7 +70,7 @@ namespace iroha {
                      msg.hash.vote_hashes_.proposal_hash,
                      msg.hash.vote_hashes_.block_hash);
 
-          auto iter = findStore(msg.hash.vote_round_);
+          auto iter = findStore(msg.hash);
           auto block_state = iter->insert(msg);
 
           // Single BlockStorage always returns CommitMessage because it

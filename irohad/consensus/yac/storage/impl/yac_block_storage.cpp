@@ -27,10 +27,11 @@ namespace iroha {
       // --------| Public API |--------
 
       YacBlockStorage::YacBlockStorage(
-          Round round,
+          YacHash hash,
           PeersNumberType peers_in_round,
           std::shared_ptr<SupermajorityChecker> supermajority_checker)
-          : storage_key_(round),
+          : storage_hash_(hash),
+            storage_key_(hash.vote_round_),
             peers_in_round_(peers_in_round),
             supermajority_checker_(supermajority_checker) {
         log_ = log("YacBlockStorage");
@@ -80,7 +81,11 @@ namespace iroha {
         return std::count(votes_.begin(), votes_.end(), msg) != 0;
       }
 
-      Round YacBlockStorage::getStorageKey() {
+      YacHash YacBlockStorage::getStorageHash() const {
+        return storage_hash_;
+      }
+
+      Round YacBlockStorage::getStorageKey() const {
         return storage_key_;
       }
 
@@ -94,7 +99,7 @@ namespace iroha {
       }
 
       bool YacBlockStorage::validScheme(VoteMessage &vote) {
-        return getStorageKey() == vote.hash.vote_round_;
+        return getStorageHash() == vote.hash;
       }
 
     }  // namespace yac

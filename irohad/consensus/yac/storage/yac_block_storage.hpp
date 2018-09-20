@@ -45,7 +45,7 @@ namespace iroha {
 
        public:
         YacBlockStorage(
-            Round round,
+            YacHash hash,
             PeersNumberType peers_in_round,
             std::shared_ptr<SupermajorityChecker> supermajority_checker =
                 std::make_shared<SupermajorityCheckerImpl>());
@@ -89,9 +89,14 @@ namespace iroha {
         bool isContains(const VoteMessage &msg) const;
 
         /**
+         * Provide hash attached to this storage
+         */
+        YacHash getStorageHash() const;
+
+        /**
          * Provide key attached to this storage
          */
-        Round getStorageKey();
+        Round getStorageKey() const;
 
        private:
         // --------| private api |--------
@@ -111,6 +116,11 @@ namespace iroha {
         bool validScheme(VoteMessage &vote);
 
         // --------| fields |--------
+
+        /**
+         * Hash of the storage
+         */
+        YacHash storage_hash_;
 
         /**
          * Key of the storage; currently it's pair of block-reject rounds

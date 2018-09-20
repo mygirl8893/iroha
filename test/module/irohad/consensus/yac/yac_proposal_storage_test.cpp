@@ -89,7 +89,7 @@ TEST_F(YacProposalStorageTest, YacProposalStorageWhenRejectCase) {
     ASSERT_EQ(boost::none, storage.insert(valid_votes.at(i)));
   }
 
-  // insert 2 for other hash
+  // insert 2 for other hash and round
   auto other_hash =
       YacHash(default_round, hash.vote_hashes_.proposal_hash, "other_commit");
   for (auto i = 0; i < 2; ++i) {
