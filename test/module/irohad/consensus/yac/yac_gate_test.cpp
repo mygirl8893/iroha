@@ -38,7 +38,7 @@ class YacGateTest : public ::testing::Test {
     auto keypair =
         shared_model::crypto::DefaultCryptoAlgorithmType::generateKeypair();
 
-    expected_hash = YacHash("proposal", "block");
+    expected_hash = YacHash(iroha::consensus::Round{1, 1}, "proposal", "block");
     auto tx = shared_model::proto::TransactionBuilder()
                   .creatorAccountId("account@domain")
                   .setAccountQuorum("account@domain", 1)
@@ -122,11 +122,13 @@ TEST_F(YacGateTest, YacGateSubscriptionTest) {
       .WillOnce(Return(ClusterOrdering::create({mk_peer("fake_node")})));
 
   // make hash from block
-  EXPECT_CALL(*hash_provider, makeHash(_)).WillOnce(Return(expected_hash));
+  EXPECT_CALL(*hash_provider, makeHash(_, _)).WillOnce(Return(expected_hash));
 
   // make blocks
   EXPECT_CALL(*block_creator, on_block())
-      .WillOnce(Return(rxcpp::observable<>::just(expected_block)));
+      .WillOnce(
+          Return(rxcpp::observable<>::just(iroha::consensus::BlockWithRound{
+              expected_block, std::make_shared<iroha::consensus::Round>()})));
 
   init();
 
@@ -165,11 +167,13 @@ TEST_F(YacGateTest, YacGateSubscribtionTestFailCase) {
   EXPECT_CALL(*peer_orderer, getOrdering(_)).WillOnce(Return(boost::none));
 
   // make hash from block
-  EXPECT_CALL(*hash_provider, makeHash(_)).WillOnce(Return(expected_hash));
+  EXPECT_CALL(*hash_provider, makeHash(_, _)).WillOnce(Return(expected_hash));
 
   // make blocks
   EXPECT_CALL(*block_creator, on_block())
-      .WillOnce(Return(rxcpp::observable<>::just(expected_block)));
+      .WillOnce(
+          Return(rxcpp::observable<>::just(iroha::consensus::BlockWithRound{
+              expected_block, std::make_shared<iroha::consensus::Round>()})));
 
   init();
 }
@@ -182,10 +186,12 @@ TEST_F(YacGateTest, YacGateSubscribtionTestFailCase) {
 TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
   // make blocks
   EXPECT_CALL(*block_creator, on_block())
-      .WillOnce(Return(rxcpp::observable<>::just(expected_block)));
+      .WillOnce(
+          Return(rxcpp::observable<>::just(iroha::consensus::BlockWithRound{
+              expected_block, std::make_shared<iroha::consensus::Round>()})));
 
   // make hash from block
-  EXPECT_CALL(*hash_provider, makeHash(_)).WillOnce(Return(expected_hash));
+  EXPECT_CALL(*hash_provider, makeHash(_, _)).WillOnce(Return(expected_hash));
 
   // generate order of peers
   EXPECT_CALL(*peer_orderer, getOrdering(_))
@@ -216,7 +222,8 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommit) {
                 .finish());
   const auto &signature = *(actual_block->signatures().begin());
 
-  message.hash = YacHash("actual_proposal", "actual_block");
+  message.hash =
+      YacHash(iroha::consensus::Round{1, 1}, "actual_proposal", "actual_block");
   message.signature = clone(signature);
   commit_message = CommitMessage({message});
   expected_commit = rxcpp::observable<>::just(Answer(commit_message));
@@ -268,10 +275,12 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommitFailFirst) {
 
   // make blocks
   EXPECT_CALL(*block_creator, on_block())
-      .WillOnce(Return(rxcpp::observable<>::just(expected_block)));
+      .WillOnce(
+          Return(rxcpp::observable<>::just(iroha::consensus::BlockWithRound{
+              expected_block, std::make_shared<iroha::consensus::Round>()})));
 
   // make hash from block
-  EXPECT_CALL(*hash_provider, makeHash(_)).WillOnce(Return(expected_hash));
+  EXPECT_CALL(*hash_provider, makeHash(_, _)).WillOnce(Return(expected_hash));
 
   // generate order of peers
   EXPECT_CALL(*peer_orderer, getOrdering(_))
@@ -280,7 +289,8 @@ TEST_F(YacGateTest, LoadBlockWhenDifferentCommitFailFirst) {
   EXPECT_CALL(*hash_gate, vote(expected_hash, _)).Times(1);
 
   // expected values
-  expected_hash = YacHash("actual_proposal", "actual_block");
+  expected_hash =
+      YacHash(iroha::consensus::Round{1, 1}, "actual_proposal", "actual_block");
 
   message.hash = expected_hash;
 

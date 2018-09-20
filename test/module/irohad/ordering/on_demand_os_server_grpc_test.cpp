@@ -25,7 +25,7 @@ struct OnDemandOsServerGrpcTest : public ::testing::Test {
 
   std::shared_ptr<MockOdOsNotification> notification;
   std::shared_ptr<OnDemandOsServerGrpc> server;
-  Round round{1, 2};
+  iroha::consensus::Round round{1, 2};
 };
 
 /**

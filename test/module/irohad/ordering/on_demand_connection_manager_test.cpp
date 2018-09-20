@@ -14,6 +14,8 @@
 using namespace iroha::ordering;
 using namespace iroha::ordering::transport;
 
+using iroha::consensus::Round;
+
 using ::testing::ByMove;
 using ::testing::Ref;
 using ::testing::Return;
@@ -78,7 +80,7 @@ TEST_F(OnDemandConnectionManagerTest, onTransactions) {
       OnDemandConnectionManager::kCurrentRoundRejectConsumer,
       OnDemandConnectionManager::kNextRoundRejectConsumer,
       OnDemandConnectionManager::kNextRoundCommitConsumer};
-  const transport::Round rounds[] = {
+  const Round rounds[] = {
       {round.block_round, round.reject_round + 2},
       {round.block_round + 1, 2},
       {round.block_round + 2, 1}};

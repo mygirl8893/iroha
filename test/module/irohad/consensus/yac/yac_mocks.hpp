@@ -187,8 +187,9 @@ namespace iroha {
 
       class MockYacHashProvider : public YacHashProvider {
        public:
-        MOCK_CONST_METHOD1(makeHash,
-                           YacHash(const shared_model::interface::Block &));
+        MOCK_CONST_METHOD2(makeHash,
+                           YacHash(const shared_model::interface::Block &,
+                                   const consensus::Round &));
 
         MOCK_CONST_METHOD1(
             toModelHash,
@@ -247,6 +248,7 @@ namespace iroha {
               }
               return result;
             }();
+        Round default_first_round_ = Round{1, 1};
 
         void SetUp() override {
           network = std::make_shared<MockYacNetwork>();

@@ -27,12 +27,13 @@ OnDemandOrderingGate::OnDemandOrderingGate(
         visit_in_place(event,
                        [this](const BlockEvent &block) {
                          // block committed, increment block round
-                         current_round_ = {block.height, 1};
+                         current_round_ = consensus::Round{block.height, 1};
                        },
                        [this](const EmptyEvent &empty) {
                          // no blocks committed, increment reject round
-                         current_round_ = {current_round_.block_round,
-                                           current_round_.reject_round + 1};
+                         current_round_ =
+                             consensus::Round{current_round_.block_round,
+                                              current_round_.reject_round + 1};
                        });
 
         // notify our ordering service about new round

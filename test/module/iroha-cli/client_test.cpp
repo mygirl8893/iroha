@@ -72,8 +72,7 @@ class ClientServerTest : public testing::Test {
     block_query = std::make_shared<MockBlockQuery>();
     storage = std::make_shared<MockStorage>();
 
-    rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
-        prop_notifier;
+    rxcpp::subjects::subject<iroha::consensus::ProposalWithRound> prop_notifier;
     rxcpp::subjects::subject<iroha::synchronizer::SynchronizationEvent>
         commit_notifier;
     EXPECT_CALL(*pcsMock, on_proposal())

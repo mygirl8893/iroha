@@ -37,7 +37,7 @@ namespace iroha {
       ordering_gate_->propagateBatch(batch);
     }
 
-    rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
+    rxcpp::observable<consensus::ProposalWithRound>
     PeerCommunicationServiceImpl::on_proposal() const {
       return ordering_gate_->on_proposal();
     }

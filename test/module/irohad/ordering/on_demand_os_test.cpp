@@ -16,6 +16,8 @@ using namespace iroha;
 using namespace iroha::ordering;
 using namespace iroha::ordering::transport;
 
+using iroha::consensus::Round;
+
 class OnDemandOsTest : public ::testing::Test {
  public:
   std::shared_ptr<OnDemandOrderingService> os;
@@ -140,7 +142,8 @@ TEST_F(OnDemandOsTest, Erase) {
     ASSERT_TRUE(os->onRequestProposal({i + 1, commit_round.reject_round}));
   }
 
-  for (BlockRoundType i = commit_round.block_round + proposal_limit;
+  for (iroha::consensus::BlockRoundType i =
+           commit_round.block_round + proposal_limit;
        i < commit_round.block_round + 2 * proposal_limit;
        ++i) {
     generateTransactionsAndInsert({i + 1, commit_round.reject_round}, {1, 2});
@@ -165,7 +168,8 @@ TEST_F(OnDemandOsTest, EraseReject) {
     ASSERT_TRUE(os->onRequestProposal({reject_round.block_round, i + 1}));
   }
 
-  for (RejectRoundType i = reject_round.reject_round + proposal_limit;
+  for (iroha::consensus::RejectRoundType i =
+           reject_round.reject_round + proposal_limit;
        i < reject_round.reject_round + 2 * proposal_limit;
        ++i) {
     generateTransactionsAndInsert({reject_round.block_round, i + 1}, {1, 2});

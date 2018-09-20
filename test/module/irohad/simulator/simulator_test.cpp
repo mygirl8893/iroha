@@ -74,6 +74,8 @@ class SimulatorTest : public ::testing::Test {
   std::shared_ptr<MockOrderingGate> ordering_gate;
   std::shared_ptr<shared_model::crypto::CryptoModelSigner<>> crypto_signer;
   std::unique_ptr<shared_model::interface::UnsafeBlockFactory> block_factory;
+  std::shared_ptr<iroha::consensus::Round> default_round_ =
+      std::make_shared<iroha::consensus::Round>(1, 1);
 
   std::shared_ptr<Simulator> simulator;
 };
@@ -109,8 +111,8 @@ shared_model::proto::Proposal makeProposal(int height) {
 TEST_F(SimulatorTest, ValidWhenInitialized) {
   // simulator constructor => on_proposal subscription called
   EXPECT_CALL(*ordering_gate, on_proposal())
-      .WillOnce(Return(rxcpp::observable<>::empty<
-                       std::shared_ptr<shared_model::interface::Proposal>>()));
+      .WillOnce(
+          Return(rxcpp::observable<>::empty<consensus::ProposalWithRound>()));
 
   init();
 }
@@ -147,8 +149,8 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
           std::make_pair(proposal, iroha::validation::TransactionsErrors{})));
 
   EXPECT_CALL(*ordering_gate, on_proposal())
-      .WillOnce(Return(rxcpp::observable<>::empty<
-                       std::shared_ptr<shared_model::interface::Proposal>>()));
+      .WillOnce(
+          Return(rxcpp::observable<>::empty<consensus::ProposalWithRound>()));
 
   EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,
               sign(A<shared_model::interface::Block &>()))
@@ -167,12 +169,13 @@ TEST_F(SimulatorTest, ValidWhenPreviousBlock) {
 
   auto block_wrapper =
       make_test_subscriber<CallExact>(simulator->on_block(), 1);
-  block_wrapper.subscribe([&proposal](const auto block) {
-    ASSERT_EQ(block->height(), proposal->height());
-    ASSERT_EQ(block->transactions(), proposal->transactions());
+  block_wrapper.subscribe([&proposal](const auto &block_with_round) {
+    ASSERT_EQ(block_with_round.first->height(), proposal->height());
+    ASSERT_EQ(block_with_round.first->transactions(), proposal->transactions());
   });
 
-  simulator->process_proposal(*proposal);
+  simulator->process_proposal(
+      iroha::consensus::ProposalWithRound{proposal, default_round_});
 
   ASSERT_TRUE(proposal_wrapper.validate());
   ASSERT_TRUE(block_wrapper.validate());
@@ -189,8 +192,8 @@ TEST_F(SimulatorTest, FailWhenNoBlock) {
   EXPECT_CALL(*validator, validate(_, _)).Times(0);
 
   EXPECT_CALL(*ordering_gate, on_proposal())
-      .WillOnce(Return(rxcpp::observable<>::empty<
-                       std::shared_ptr<shared_model::interface::Proposal>>()));
+      .WillOnce(
+          Return(rxcpp::observable<>::empty<consensus::ProposalWithRound>()));
 
   EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,
               sign(A<shared_model::interface::Block &>()))
@@ -206,7 +209,9 @@ TEST_F(SimulatorTest, FailWhenNoBlock) {
       make_test_subscriber<CallExact>(simulator->on_block(), 0);
   block_wrapper.subscribe();
 
-  simulator->process_proposal(proposal);
+  simulator->process_proposal(iroha::consensus::ProposalWithRound{
+      std::make_shared<shared_model::proto::Proposal>(std::move(proposal)),
+      default_round_});
 
   ASSERT_TRUE(proposal_wrapper.validate());
   ASSERT_TRUE(block_wrapper.validate());
@@ -226,8 +231,8 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
   EXPECT_CALL(*validator, validate(_, _)).Times(0);
 
   EXPECT_CALL(*ordering_gate, on_proposal())
-      .WillOnce(Return(rxcpp::observable<>::empty<
-                       std::shared_ptr<shared_model::interface::Proposal>>()));
+      .WillOnce(
+          Return(rxcpp::observable<>::empty<consensus::ProposalWithRound>()));
 
   EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,
               sign(A<shared_model::interface::Block &>()))
@@ -243,7 +248,9 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
       make_test_subscriber<CallExact>(simulator->on_block(), 0);
   block_wrapper.subscribe();
 
-  simulator->process_proposal(proposal);
+  simulator->process_proposal(iroha::consensus::ProposalWithRound{
+      std::make_shared<shared_model::proto::Proposal>(std::move(proposal)),
+      default_round_});
 
   ASSERT_TRUE(proposal_wrapper.validate());
   ASSERT_TRUE(block_wrapper.validate());
@@ -258,8 +265,8 @@ TEST_F(SimulatorTest, FailWhenSameAsProposalHeight) {
  * @then verified proposal consists of txs we did not fail
  */
 TEST_F(SimulatorTest, RightNumberOfFailedTxs) {
-  // create a 3-height proposal, but validator returns only a 2-height verified
-  // proposal
+  // create a 3-height proposal, but validator returns only a 2-height
+  // verified proposal
   auto tx = shared_model::proto::TransactionBuilder()
                 .createdTime(iroha::time::now())
                 .creatorAccountId("admin@ru")
@@ -301,8 +308,8 @@ TEST_F(SimulatorTest, RightNumberOfFailedTxs) {
       .WillOnce(Return(std::make_pair(verified_proposal, tx_errors)));
 
   EXPECT_CALL(*ordering_gate, on_proposal())
-      .WillOnce(Return(rxcpp::observable<>::empty<
-                       std::shared_ptr<shared_model::interface::Proposal>>()));
+      .WillOnce(
+          Return(rxcpp::observable<>::empty<consensus::ProposalWithRound>()));
 
   EXPECT_CALL(*shared_model::crypto::crypto_signer_expecter,
               sign(A<shared_model::interface::Block &>()))
@@ -321,7 +328,8 @@ TEST_F(SimulatorTest, RightNumberOfFailedTxs) {
     ASSERT_TRUE(verified_proposal_->second.size() == tx_errors.size());
   });
 
-  simulator->process_proposal(*proposal);
+  simulator->process_proposal(
+      iroha::consensus::ProposalWithRound{std::move(proposal), default_round_});
 
   ASSERT_TRUE(proposal_wrapper.validate());
 }

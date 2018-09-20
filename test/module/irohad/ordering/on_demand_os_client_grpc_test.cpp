@@ -37,7 +37,7 @@ struct OnDemandOsClientGrpcTest : public ::testing::Test {
   OnDemandOsClientGrpc::TimepointType timepoint;
   std::chrono::milliseconds timeout{1};
   std::shared_ptr<OnDemandOsClientGrpc> client;
-  Round round{1, 2};
+  iroha::consensus::Round round{1, 2};
 };
 
 /**

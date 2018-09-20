@@ -16,6 +16,8 @@ using namespace iroha::ordering::transport;
 using namespace iroha::network;
 using namespace framework::test_subscriber;
 
+using iroha::consensus::Round;
+
 using ::testing::_;
 using ::testing::ByMove;
 using ::testing::Return;
@@ -79,7 +81,7 @@ TEST_F(OnDemandOrderingGateTest, BlockEvent) {
 
   auto gate_wrapper =
       make_test_subscriber<CallExact>(ordering_gate->on_proposal(), 1);
-  gate_wrapper.subscribe([&](auto val) { ASSERT_EQ(val.get(), proposal); });
+  gate_wrapper.subscribe([&](auto val) { ASSERT_EQ(*val.first, *proposal); });
 
   rounds.get_subscriber().on_next(event);
 
@@ -105,7 +107,7 @@ TEST_F(OnDemandOrderingGateTest, EmptyEvent) {
 
   auto gate_wrapper =
       make_test_subscriber<CallExact>(ordering_gate->on_proposal(), 1);
-  gate_wrapper.subscribe([&](auto val) { ASSERT_EQ(val.get(), proposal); });
+  gate_wrapper.subscribe([&](auto val) { ASSERT_EQ(*val.first, *proposal); });
 
   rounds.get_subscriber().on_next(OnDemandOrderingGate::EmptyEvent{});
 
@@ -136,7 +138,7 @@ TEST_F(OnDemandOrderingGateTest, BlockEventNoProposal) {
 
   auto gate_wrapper =
       make_test_subscriber<CallExact>(ordering_gate->on_proposal(), 1);
-  gate_wrapper.subscribe([&](auto val) { ASSERT_EQ(val.get(), proposal); });
+  gate_wrapper.subscribe([&](auto val) { ASSERT_EQ(*val.first, *proposal); });
 
   rounds.get_subscriber().on_next(event);
 
@@ -166,7 +168,7 @@ TEST_F(OnDemandOrderingGateTest, EmptyEventNoProposal) {
 
   auto gate_wrapper =
       make_test_subscriber<CallExact>(ordering_gate->on_proposal(), 1);
-  gate_wrapper.subscribe([&](auto val) { ASSERT_EQ(val.get(), proposal); });
+  gate_wrapper.subscribe([&](auto val) { ASSERT_EQ(*val.first, *proposal); });
 
   rounds.get_subscriber().on_next(OnDemandOrderingGate::EmptyEvent{});
 

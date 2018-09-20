@@ -31,6 +31,7 @@ using namespace iroha::network;
 using namespace iroha::ametsuchi;
 using namespace iroha::torii;
 using namespace iroha::synchronizer;
+using namespace iroha::consensus;
 
 using namespace std::chrono_literals;
 constexpr std::chrono::milliseconds initial_timeout = 1s;
@@ -49,8 +50,7 @@ constexpr uint32_t resubscribe_attempts = 3;
 class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
  public:
   CustomPeerCommunicationServiceMock(
-      rxcpp::subjects::subject<
-          std::shared_ptr<shared_model::interface::Proposal>> prop_notifier,
+      rxcpp::subjects::subject<ProposalWithRound> prop_notifier,
       rxcpp::subjects::subject<SynchronizationEvent> commit_notifier,
       rxcpp::subjects::subject<
           std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
@@ -62,8 +62,7 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
   void propagate_batch(
       const shared_model::interface::TransactionBatch &batch) const override {}
 
-  rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
-  on_proposal() const override {
+  rxcpp::observable<ProposalWithRound> on_proposal() const override {
     return prop_notifier_.get_observable();
   }
 
@@ -78,8 +77,7 @@ class CustomPeerCommunicationServiceMock : public PeerCommunicationService {
   }
 
  private:
-  rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
-      prop_notifier_;
+  rxcpp::subjects::subject<ProposalWithRound> prop_notifier_;
   rxcpp::subjects::subject<SynchronizationEvent> commit_notifier_;
   rxcpp::subjects::subject<
       std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
@@ -138,8 +136,7 @@ class ToriiServiceTest : public testing::Test {
   std::shared_ptr<MockBlockQuery> block_query;
   std::shared_ptr<MockStorage> storage;
 
-  rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
-      prop_notifier_;
+  rxcpp::subjects::subject<iroha::consensus::ProposalWithRound> prop_notifier_;
   rxcpp::subjects::subject<SynchronizationEvent> commit_notifier_;
   rxcpp::subjects::subject<
       std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
@@ -260,7 +257,8 @@ TEST_F(ToriiServiceTest, StatusWhenBlocking) {
           .createdTime(iroha::time::now())
           .transactions(txs)
           .build());
-  prop_notifier_.get_subscriber().on_next(proposal);
+  prop_notifier_.get_subscriber().on_next(iroha::consensus::ProposalWithRound{
+      proposal, std::make_shared<iroha::consensus::Round>()});
 
   torii::CommandSyncClient client2(client1);
 
@@ -443,7 +441,8 @@ TEST_F(ToriiServiceTest, StreamingFullPipelineTest) {
                                             .transactions(txs)
                                             .height(1)
                                             .build());
-  prop_notifier_.get_subscriber().on_next(proposal);
+  prop_notifier_.get_subscriber().on_next(iroha::consensus::ProposalWithRound{
+      proposal, std::make_shared<iroha::consensus::Round>()});
   verified_prop_notifier_.get_subscriber().on_next(
       std::make_shared<iroha::validation::VerifiedProposalAndErrors>(
           std::make_pair(proposal, iroha::validation::TransactionsErrors{})));

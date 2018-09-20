@@ -135,7 +135,7 @@ namespace integration_framework {
         ->getPeerCommunicationService()
         ->on_proposal()
         .subscribe([this](auto proposal) {
-          proposal_queue_.push(proposal);
+          proposal_queue_.push(proposal.first);
           log_->info("proposal");
           queue_cond.notify_all();
         });

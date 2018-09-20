@@ -33,10 +33,12 @@ TEST(YacHashProviderTest, MakeYacHashTest) {
 
   auto hex_test_hash = block->hash().hex();
 
-  auto yac_hash = hash_provider.makeHash(*block);
+  auto yac_hash = hash_provider.makeHash(*block, iroha::consensus::Round{1, 1});
 
-  ASSERT_EQ(hex_test_hash, yac_hash.proposal_hash);
-  ASSERT_EQ(hex_test_hash, yac_hash.block_hash);
+  ASSERT_EQ(hex_test_hash, yac_hash.vote_hashes_.proposal_hash);
+  ASSERT_EQ(hex_test_hash, yac_hash.vote_hashes_.block_hash);
+  ASSERT_EQ(1, yac_hash.vote_round_.block_round);
+  ASSERT_EQ(1, yac_hash.vote_round_.reject_round);
 }
 
 TEST(YacHashProviderTest, ToModelHashTest) {
@@ -47,7 +49,7 @@ TEST(YacHashProviderTest, ToModelHashTest) {
   block->addSignature(shared_model::crypto::Signed("data"),
                       shared_model::crypto::PublicKey("key"));
 
-  auto yac_hash = hash_provider.makeHash(*block);
+  auto yac_hash = hash_provider.makeHash(*block, iroha::consensus::Round{1, 1});
 
   auto model_hash = hash_provider.toModelHash(yac_hash);
 

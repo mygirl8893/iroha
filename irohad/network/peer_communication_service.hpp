@@ -22,6 +22,7 @@
 
 #include "synchronizer/synchronizer_common.hpp"
 #include "validation/stateful_validator_common.hpp"
+#include "consensus/round.hpp"
 
 namespace shared_model {
   namespace interface {
@@ -48,12 +49,11 @@ namespace iroha {
 
       /**
        * Event is triggered when proposal arrives from network.
-       * @return observable with Proposals.
-       * (List of Proposals)
+       * @return observable with Proposals and rounds, in which proposals
+       * appeared (List of Proposals)
        */
-      virtual rxcpp::observable<
-          std::shared_ptr<shared_model::interface::Proposal>>
-      on_proposal() const = 0;
+      virtual rxcpp::observable<consensus::ProposalWithRound> on_proposal()
+          const = 0;
 
       /**
        * Event is triggered when verified proposal arrives

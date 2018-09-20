@@ -47,7 +47,7 @@ namespace iroha {
           log_(logger::log("TxProcessor")) {
       // notify about stateless success
       pcs_->on_proposal().subscribe([this](auto model_proposal) {
-        for (const auto &tx : model_proposal->transactions()) {
+        for (const auto &tx : model_proposal.first->transactions()) {
           const auto &hash = tx.hash();
           log_->info("on proposal stateless success: {}", hash.hex());
           this->publishStatus(TxStatusType::kStatelessValid, hash);

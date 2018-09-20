@@ -91,6 +91,17 @@ class TransactionProcessorTest : public ::testing::Test {
     return tx;
   }
 
+  /**
+   * Wrap proposal into proposal with round structure
+   * @param proposal to be wrapped
+   * @return proposal with round
+   */
+  consensus::ProposalWithRound wrapProposal(
+      std::shared_ptr<shared_model::interface::Proposal> proposal) {
+    return consensus::ProposalWithRound{
+        proposal, std::make_shared<consensus::Round>(1, 1)};
+  }
+
  protected:
   using StatusMapType = std::unordered_map<
       shared_model::crypto::Hash,
@@ -126,8 +137,7 @@ class TransactionProcessorTest : public ::testing::Test {
       shared_model::proto::TransactionStatusBuilder>
       status_builder;
 
-  rxcpp::subjects::subject<std::shared_ptr<shared_model::interface::Proposal>>
-      prop_notifier;
+  rxcpp::subjects::subject<consensus::ProposalWithRound> prop_notifier;
   rxcpp::subjects::subject<SynchronizationEvent> commit_notifier;
   rxcpp::subjects::subject<
       std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
@@ -167,7 +177,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalTest) {
   auto proposal = std::make_shared<shared_model::proto::Proposal>(
       TestProposalBuilder().transactions(txs).build());
 
-  prop_notifier.get_subscriber().on_next(proposal);
+  prop_notifier.get_subscriber().on_next(wrapProposal(proposal));
   prop_notifier.get_subscriber().on_completed();
 
   SCOPED_TRACE("Stateless valid status verification");
@@ -221,7 +231,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnProposalBatchTest) {
   auto proposal = std::make_shared<shared_model::proto::Proposal>(
       TestProposalBuilder().transactions(proto_transactions).build());
 
-  prop_notifier.get_subscriber().on_next(proposal);
+  prop_notifier.get_subscriber().on_next(wrapProposal(proposal));
   prop_notifier.get_subscriber().on_completed();
 
   SCOPED_TRACE("Stateless valid status verification");
@@ -260,7 +270,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
   auto proposal = std::make_shared<shared_model::proto::Proposal>(
       TestProposalBuilder().transactions(txs).build());
 
-  prop_notifier.get_subscriber().on_next(proposal);
+  prop_notifier.get_subscriber().on_next(wrapProposal(proposal));
   prop_notifier.get_subscriber().on_completed();
 
   // empty transactions errors - all txs are valid
@@ -283,8 +293,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorBlockCreatedTest) {
   // transactions are not commited
 
   SCOPED_TRACE("Stateful Valid status verification");
-  validateStatuses<shared_model::interface::StatefulValidTxResponse>(
-      txs);
+  validateStatuses<shared_model::interface::StatefulValidTxResponse>(txs);
 }
 
 /**
@@ -319,7 +328,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorOnCommitTest) {
   auto proposal = std::make_shared<shared_model::proto::Proposal>(
       TestProposalBuilder().transactions(txs).build());
 
-  prop_notifier.get_subscriber().on_next(proposal);
+  prop_notifier.get_subscriber().on_next(wrapProposal(proposal));
   prop_notifier.get_subscriber().on_completed();
 
   // empty transactions errors - all txs are valid
@@ -385,7 +394,7 @@ TEST_F(TransactionProcessorTest, TransactionProcessorInvalidTxsTest) {
           .transactions(boost::join(block_txs, invalid_txs))
           .build());
 
-  prop_notifier.get_subscriber().on_next(proposal);
+  prop_notifier.get_subscriber().on_next(wrapProposal(proposal));
   prop_notifier.get_subscriber().on_completed();
 
   // trigger the verified event with txs, which we want to fail, as errors

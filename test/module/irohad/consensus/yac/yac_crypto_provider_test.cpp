@@ -37,10 +37,11 @@ namespace iroha {
                 std::make_shared<shared_model::proto::ProtoCommonObjectsFactory<
                     shared_model::validation::FieldValidator>>();
         std::shared_ptr<CryptoProviderImpl> crypto_provider;
+        Round default_round_ = Round{1, 1};
       };
 
       TEST_F(YacCryptoProviderTest, ValidWhenSameMessage) {
-        YacHash hash("1", "1");
+        YacHash hash(default_round_, "1", "1");
         auto sig = shared_model::proto::SignatureBuilder()
                        .publicKey(shared_model::crypto::PublicKey(pubkey))
                        .signedData(shared_model::crypto::Signed(signed_data))
@@ -54,7 +55,7 @@ namespace iroha {
       }
 
       TEST_F(YacCryptoProviderTest, InvalidWhenMessageChanged) {
-        YacHash hash("1", "1");
+        YacHash hash(default_round_, "1", "1");
         auto sig = shared_model::proto::SignatureBuilder()
                        .publicKey(shared_model::crypto::PublicKey(pubkey))
                        .signedData(shared_model::crypto::Signed(signed_data))
@@ -64,7 +65,7 @@ namespace iroha {
 
         auto vote = crypto_provider->getVote(hash);
 
-        vote.hash.block_hash = "hash changed";
+        vote.hash.vote_hashes_.block_hash = "hash changed";
 
         ASSERT_FALSE(crypto_provider->verify({vote}));
       }

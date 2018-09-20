@@ -23,20 +23,22 @@
 #include "module/irohad/consensus/yac/yac_mocks.hpp"
 
 using namespace iroha::consensus::yac;
+using iroha::consensus::Round;
 
 static logger::Logger log_ = logger::testLog("YacProposalStorage");
 
 class YacProposalStorageTest : public ::testing::Test {
  public:
   YacHash hash;
+  Round default_round = Round{1, 1};
   PeersNumberType number_of_peers;
-  YacProposalStorage storage = YacProposalStorage("proposal", 4);
+  YacProposalStorage storage = YacProposalStorage(default_round, 4);
   std::vector<VoteMessage> valid_votes;
 
   void SetUp() override {
-    hash = YacHash("proposal", "commit");
+    hash = YacHash(default_round, "proposal", "commit");
     number_of_peers = 7;
-    storage = YacProposalStorage(hash.proposal_hash, number_of_peers);
+    storage = YacProposalStorage(hash.vote_round_, number_of_peers);
     valid_votes = [this]() {
       std::vector<VoteMessage> votes;
       for (auto i = 0u; i < number_of_peers; ++i) {
@@ -88,7 +90,8 @@ TEST_F(YacProposalStorageTest, YacProposalStorageWhenRejectCase) {
   }
 
   // insert 2 for other hash
-  auto other_hash = YacHash(hash.proposal_hash, "other_commit");
+  auto other_hash =
+      YacHash(default_round, hash.vote_hashes_.proposal_hash, "other_commit");
   for (auto i = 0; i < 2; ++i) {
     auto answer = storage.insert(
         create_vote(other_hash, std::to_string(valid_votes.size() + 1 + i)));

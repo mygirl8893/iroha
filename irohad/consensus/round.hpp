@@ -38,6 +38,11 @@ namespace iroha {
       BlockRoundType block_round;
       RejectRoundType reject_round;
 
+      Round() = default;
+
+      Round(BlockRoundType block_r, RejectRoundType reject_r)
+          : block_round{block_r}, reject_round{reject_r} {}
+
       bool operator<(const Round &rhs) const {
         return std::tie(block_round, reject_round)
             < std::tie(rhs.block_round, rhs.reject_round);
@@ -49,7 +54,7 @@ namespace iroha {
       }
 
       bool operator!=(const Round &rhs) const {
-        return not (*this == rhs);
+        return not(*this == rhs);
       }
     };
 

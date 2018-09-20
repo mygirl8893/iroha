@@ -38,8 +38,8 @@ namespace iroha {
       void propagate_batch(const shared_model::interface::TransactionBatch
                                &batch) const override;
 
-      rxcpp::observable<std::shared_ptr<shared_model::interface::Proposal>>
-      on_proposal() const override;
+      rxcpp::observable<consensus::ProposalWithRound> on_proposal()
+          const override;
 
       rxcpp::observable<
           std::shared_ptr<iroha::validation::VerifiedProposalAndErrors>>
